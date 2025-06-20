@@ -1,0 +1,8 @@
+[project]
+name = "wine_quality_predicting_model"
+version = "0.1.0"
+description = "A machine learning project to predict the wine quality using physicochemical features"
+authors = [
+    {name = "Serini Puwakgolla", email = "serinipuwakgolla@gmail.com"}
+]
+requires-python = ">=3.9"
