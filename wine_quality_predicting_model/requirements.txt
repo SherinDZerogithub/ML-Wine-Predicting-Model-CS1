@@ -1,0 +1,25 @@
+# Core Libraries
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+
+# Model Optimization
+xgboost
+
+# Web Deployment
+streamlit
+
+# Model Serialization
+joblib
+
+# Optional (for classification metrics & visuals)
+scipy
+shap
+
+# Optional (for cross-validation visualization or enhancements)
+plotly
+
+# Notebook Support (if you're working in notebooks)
+jupyterlab
