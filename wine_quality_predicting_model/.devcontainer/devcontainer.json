@@ -1,0 +1,12 @@
+{
+  "name": "Wine Quality Dev Container",
+  "dockerFile": "../Dockerfile.txt",
+  "context": "..",
+  "appPort": [8501],
+  "forwardPorts": [8501],
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "postCreateCommand": "pip install -r requirements.txt",
+  "remoteUser": "vscode"
+}
