@@ -1,0 +1,14 @@
+{
+  "name": "Wine Quality (Anaconda)",
+  "build": {
+    "context": "..",
+    "dockerfile": "Dockerfile"
+  },
+  "appPort": [8501],
+  "forwardPorts": [8501, 8888],
+  "postCreateCommand": "pip install -r requirements.txt",
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "remoteUser": "vscode"
+}
