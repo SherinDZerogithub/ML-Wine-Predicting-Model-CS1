@@ -23,3 +23,4 @@ plotly
 
 # Notebook Support (if you're working in notebooks)
 jupyterlab
+
