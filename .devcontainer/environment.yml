@@ -1,0 +1,8 @@
+name: wine-quality-env
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - -r file:requirements.txt
