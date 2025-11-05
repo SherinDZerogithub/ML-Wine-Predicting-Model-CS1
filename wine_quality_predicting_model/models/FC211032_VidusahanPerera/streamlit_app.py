@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
+from pathlib import Path
 from sklearn.metrics import roc_curve, auc
 
 # ---------------------- Page Config ----------------------
@@ -15,10 +16,18 @@ st.markdown("---")
 # ---------------------- Load Model ----------------------
 @st.cache_resource
 def load_model():
-    return joblib.load("models/FC211032_VidusahanPerera/logreg_wine_quality_pipeline.joblib")
+    # Dynamically locate the .joblib file in the same directory as this script
+    model_path = Path(__file__).resolve().parent / "logreg_wine_quality_pipeline.joblib"
+    
+    if not model_path.exists():
+        st.error(f"❌ Model file not found at: {model_path}")
+        st.stop()
+        
+    model = joblib.load(model_path)
+    return model
 
 model = load_model()
-st.success("Model loaded successfully ✅")
+st.success("✅ Logistic Regression Model loaded successfully!")
 
 # ---------------------- Input Section ----------------------
 st.sidebar.header("Enter Wine Properties")
