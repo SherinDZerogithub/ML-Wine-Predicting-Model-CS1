@@ -2,7 +2,7 @@ name: wine-quality-env
 channels:
   - defaults
 dependencies:
-  - python=3.10
+  - python=3.12
   - pip
   - pip:
       - -r file:requirements.txt

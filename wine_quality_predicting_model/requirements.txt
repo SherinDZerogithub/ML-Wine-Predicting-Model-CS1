@@ -8,6 +8,8 @@ seaborn
 # Model Optimization
 xgboost
 
+flask
+
 # Web Deployment
 streamlit
 
