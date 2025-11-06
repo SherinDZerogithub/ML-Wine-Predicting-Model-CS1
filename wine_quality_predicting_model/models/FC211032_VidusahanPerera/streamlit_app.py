@@ -29,11 +29,17 @@ def load_model():
     if isinstance(artifact, dict):
         pipe = artifact.get("pipeline", None)
         thr = float(artifact.get("threshold", 0.5))
+        roc_data = artifact.get("roc_data")
+        pr_data = artifact.get("pr_data")
+        features = artifact.get("feature_names")
     else:
         pipe = artifact
         thr = 0.5
+        roc_data = None
+        pr_data = None
+        features = None
 
-    return {"pipe": pipe, "threshold": thr}
+    return {"pipe": pipe, "threshold": thr, "roc_data": roc_data, "pr_data": pr_data, "features": features}
 
 mdl = load_model()
 pipe = mdl["pipe"]
@@ -121,11 +127,8 @@ st.subheader("📈 Model ROC Curve")
 
 roc_data = None
 
-# Try to load ROC data from model artifact
-if isinstance(mdl, dict) and "roc_data" in mdl:
-    roc_data = mdl["roc_data"]
-elif isinstance(pipe, dict) and "roc_data" in pipe:
-    roc_data = pipe["roc_data"]
+# load ROC data from model artifact
+roc_data = mdl.get("roc_data")
 
 if roc_data:
     # ✅ Plot real ROC from saved model data
@@ -168,11 +171,8 @@ st.subheader("📊 Precision–Recall Curve")
 
 pr_data = None
 
-# Try to load PR curve data from model artifact
-if isinstance(mdl, dict) and "pr_data" in mdl:
-    pr_data = mdl["pr_data"]
-elif isinstance(pipe, dict) and "pr_data" in pipe:
-    pr_data = pipe["pr_data"]
+# load PR curve data from model artifact
+pr_data = mdl.get("pr_data")
 
 if pr_data:
     # ✅ Plot real PR curve
