@@ -162,6 +162,52 @@ else:
     ax_demo.legend(loc="lower right")
     st.pyplot(fig_demo)
 
+# ---------------------- Precision-Recall Curve ----------------------
+st.markdown("---")
+st.subheader("📊 Precision–Recall Curve")
+
+pr_data = None
+
+# Try to load PR curve data from model artifact
+if isinstance(mdl, dict) and "pr_data" in mdl:
+    pr_data = mdl["pr_data"]
+elif isinstance(pipe, dict) and "pr_data" in pipe:
+    pr_data = pipe["pr_data"]
+
+if pr_data:
+    # ✅ Plot real PR curve
+    precision = np.array(pr_data["precision"])
+    recall = np.array(pr_data["recall"])
+    ap = pr_data["average_precision"]
+
+    fig_pr, ax_pr = plt.subplots()
+    ax_pr.plot(recall, precision, color="green", lw=2, label=f"AP = {ap:.3f}")
+    ax_pr.set_xlim([0.0, 1.0])
+    ax_pr.set_ylim([0.0, 1.05])
+    ax_pr.set_xlabel("Recall")
+    ax_pr.set_ylabel("Precision")
+    ax_pr.set_title("Precision–Recall Curve (Test Data)")
+    ax_pr.legend(loc="lower left")
+    st.pyplot(fig_pr)
+
+else:
+    # ⚠️ Fallback demo curve if PR data not found
+    st.info("Precision–Recall data not found in model file. Showing demo curve instead.")
+
+    recall_demo = [0.0, 0.2, 0.6, 1.0]
+    precision_demo = [1.0, 0.8, 0.5, 0.2]
+    ap_demo = auc(recall_demo, precision_demo)
+
+    fig_demo_pr, ax_demo_pr = plt.subplots()
+    ax_demo_pr.plot(recall_demo, precision_demo, color="green", lw=2, label=f"AP = {ap_demo:.2f}")
+    ax_demo_pr.set_xlim([0.0, 1.0])
+    ax_demo_pr.set_ylim([0.0, 1.05])
+    ax_demo_pr.set_xlabel("Recall")
+    ax_demo_pr.set_ylabel("Precision")
+    ax_demo_pr.set_title("Precision–Recall Curve (Demo)")
+    ax_demo_pr.legend(loc="lower left")
+    st.pyplot(fig_demo_pr)
+
 # ---------------------- Footer ----------------------
 st.markdown("---")
 st.caption("Developed by **Vidusahan Perera (FC211032)** | Machine Learning Group Project")
