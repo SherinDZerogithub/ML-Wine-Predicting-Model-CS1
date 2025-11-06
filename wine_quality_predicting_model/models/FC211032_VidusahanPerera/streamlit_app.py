@@ -22,11 +22,23 @@ def load_model():
     if not model_path.exists():
         st.error(f"❌ Model file not found at: {model_path}")
         st.stop()
-        
-    model = joblib.load(model_path)
-    return model
+    
+    artifact = joblib.load(model_path)
 
-model = load_model()
+    # backward compatibility: handle both dict and direct pipeline
+    if isinstance(artifact, dict):
+        pipe = artifact.get("pipeline", None)
+        thr = float(artifact.get("threshold", 0.5))
+    else:
+        pipe = artifact
+        thr = 0.5
+
+    return {"pipe": pipe, "threshold": thr}
+
+mdl = load_model()
+pipe = mdl["pipe"]
+thr  = mdl["threshold"]
+
 st.success("✅ Logistic Regression Model loaded successfully!")
 
 # ---------------------- Input Section ----------------------
@@ -65,11 +77,12 @@ st.dataframe(input_df, use_container_width=True)
 
 # ---------------------- Prediction ----------------------
 if st.button("🔮 Predict Wine Quality"):
-    proba = model.predict_proba(input_df)[0, 1]
-    pred = model.predict(input_df)[0]
+    proba = pipe.predict_proba(input_df)[0, 1]
+    pred = int(proba >= thr)
     
     st.markdown("### 🧾 Prediction Result")
     st.write(f"**Predicted Probability of Good Quality (≥7): {proba:.2f}**")
+    st.write(f"**Decision Threshold Used:** {thr:.2f}")
     
     if pred == 1:
         st.success("✅ The model predicts this wine is **Good (quality ≥ 7)**")
@@ -86,11 +99,10 @@ if st.button("🔮 Predict Wine Quality"):
 st.markdown("---")
 st.subheader("📊 Feature Importance (Standardized Coefficients)")
 
+coefs = pipe.named_steps['clf'].coef_.flatten()
 try:
-    coefs = model.named_steps['clf'].coef_.flatten()
-    features = model.named_steps['scaler'].get_feature_names_out(feature_names)
-except AttributeError:
-    coefs = model.named_steps['clf'].coef_.flatten()
+    features = pipe.named_steps['scaler'].get_feature_names_out(feature_names)
+except Exception:
     features = feature_names
 
 coef_df = pd.DataFrame({
