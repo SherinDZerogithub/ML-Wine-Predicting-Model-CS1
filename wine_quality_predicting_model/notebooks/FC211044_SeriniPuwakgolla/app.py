@@ -1,4 +1,3 @@
-# wine_quality_predicting_model/notebooks/FC211044_SeriniPuwakgolla/app.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -73,10 +72,11 @@ class WineQualityPredictor:
         """Load the trained model and scaler"""
         try:
             current_dir = os.path.dirname(__file__)
-            model_path = os.path.join(current_dir, '../../../models/FC211044_KNN_Wine_Quality/wine_quality_binary_knn_k4.joblib')
+            # Updated model path for k=1
+            model_path = os.path.join(current_dir, '../../../models/FC211044_KNN_Wine_Quality/wine_quality_binary_knn_k1.joblib')
             
             if not os.path.exists(model_path):
-                model_path = 'wine_quality_predicting_model/models/FC211044_KNN_Wine_Quality/wine_quality_binary_knn_k4.joblib'
+                model_path = 'wine_quality_predicting_model/models/FC211044_KNN_Wine_Quality/wine_quality_binary_knn_k1.joblib'
             
             st.info(f"Looking for model at: {model_path}")
             
@@ -89,12 +89,17 @@ class WineQualityPredictor:
                 st.success("✅ Model loaded successfully!")
                 st.info(f"Model uses {len(self.feature_names)} features: {', '.join(self.feature_names)}")
                 
-                # Debug: Show model classes and their meaning
+                # Updated label mapping for new threshold (>=6)
                 st.info(f"Model classes: {self.model.classes_} (0=Bad, 1=Good)")
+                st.info("📊 Quality Threshold: Good (quality >= 6), Bad (quality < 6)")
                 
                 return True
             else:
                 st.error(f"❌ Model file not found at: {model_path}")
+                # List available files for debugging
+                model_dir = os.path.dirname(model_path)
+                if os.path.exists(model_dir):
+                    st.error(f"Available files in directory: {os.listdir(model_dir)}")
                 return False
                 
         except Exception as e:
@@ -108,9 +113,6 @@ class WineQualityPredictor:
             scaled_features = self.scaler.transform(input_df)
             prediction = self.model.predict(scaled_features)[0]
             probability = self.model.predict_proba(scaled_features)[0]
-            
-            # Debug information
-            st.write(f"Debug - Prediction: {prediction}, Probabilities: {probability}")
             
             return prediction, probability
         except Exception as e:
@@ -169,7 +171,7 @@ def show_home_page(predictor):
         This application uses machine learning to predict whether a red wine is 
         **Good** or **Bad** based on its chemical properties.
         
-        **Quality Threshold:** Wines with quality > 6.5 are considered **Good**, others are **Bad**.
+        **🎯 Quality Threshold:** Wines with quality >= 6 are considered **Good**, others are **Bad**.
         """)
         if predictor.model:
             st.markdown("### Key Features Used:")
@@ -183,10 +185,9 @@ def show_home_page(predictor):
             st.error("""
             ### ⚠️ Model Not Loaded
             Please ensure the model file exists at:
-            `wine_quality_predicting_model/models/FC211044_KNN_Wine_Quality/wine_quality_binary_knn_k4.joblib`
+            `wine_quality_predicting_model/models/FC211044_KNN_Binary_Wine_Quality/wine_quality_binary_knn_k1.joblib`
             """)
     with col2:
-        # FIXED: Removed use_container_width parameter from st.image
         st.image("https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400", 
                  caption="Wine Quality Analysis")
         st.markdown("### Quick Stats")
@@ -201,7 +202,7 @@ def show_home_page(predictor):
 def show_prediction_page(predictor):
     st.header("Wine Quality Prediction")
     st.info(f"🎯 This model uses {len(predictor.feature_names)} features: **{', '.join(predictor.feature_names)}**")
-    st.info("📝 **Label Mapping:** 0 = Bad (Quality ≤ 6.5), 1 = Good (Quality > 6.5)")
+    st.info("📝 **Label Mapping:** 0 = Bad (Quality < 6), 1 = Good (Quality >= 6)")
 
     # Example buttons (outside the form)
     st.markdown("---")
@@ -274,12 +275,11 @@ def show_prediction_page(predictor):
                                               help="Related to alcohol and sugar content")
 
         submitted = st.form_submit_button("🎯 Predict Quality", use_container_width=True)
-        
-        st.info("Press Reset button before predicting the results")
+
     # Apply example values
     if 'example_type' in st.session_state:
         if st.session_state.example_type == "good":
-            # Good wine characteristics (high quality)
+            # Good wine characteristics (quality >= 6)
             if 'alcohol' in predictor.feature_names: features['alcohol'] = 12.5
             if 'volatile acidity' in predictor.feature_names: features['volatile acidity'] = 0.3
             if 'sulphates' in predictor.feature_names: features['sulphates'] = 0.8
@@ -291,7 +291,7 @@ def show_prediction_page(predictor):
             st.success("✅ Good wine example values loaded! (High alcohol, low volatile acidity)")
             
         elif st.session_state.example_type == "bad":
-            # Bad wine characteristics (low quality)
+            # Bad wine characteristics (quality < 6)
             if 'alcohol' in predictor.feature_names: features['alcohol'] = 9.0
             if 'volatile acidity' in predictor.feature_names: features['volatile acidity'] = 1.2
             if 'sulphates' in predictor.feature_names: features['sulphates'] = 0.4
@@ -302,6 +302,11 @@ def show_prediction_page(predictor):
             if 'density' in predictor.feature_names: features['density'] = 0.998
             st.warning("❌ Bad wine example values loaded! (Low alcohol, high volatile acidity)")
         
+        elif st.session_state.example_type == "reset":
+            # Reset to default values
+            for feature in features:
+                features[feature] = st.session_state.features.get(feature, features[feature])
+            st.info("🔄 Values reset to defaults")
 
     # Save current feature values to session state
     st.session_state.features = features.copy()
@@ -322,21 +327,21 @@ def display_prediction_result(prediction, probabilities, features, predictor):
     col1, col2 = st.columns([1, 2])
     
     with col1:
-        # FIXED: Correct label mapping
-        if prediction == 1:  # 1 = Good quality
+        # Updated label mapping for new threshold (>=6)
+        if prediction == 1:  # 1 = Good quality (>=6)
             st.markdown("""
             <div class="prediction-good">
                 <h2>🍷 GOOD QUALITY</h2>
                 <p>This wine is predicted to be of good quality!</p>
-                <p><strong>Quality > 6.5</strong></p>
+                <p><strong>Quality >= 6</strong></p>
             </div>
             """, unsafe_allow_html=True)
-        else:  # 0 = Bad quality
+        else:  # 0 = Bad quality (<6)
             st.markdown("""
             <div class="prediction-bad">
                 <h2>❌ BAD QUALITY</h2>
                 <p>This wine is predicted to be of poor quality</p>
-                <p><strong>Quality ≤ 6.5</strong></p>
+                <p><strong>Quality < 6</strong></p>
             </div>
             """, unsafe_allow_html=True)
         
@@ -354,7 +359,7 @@ def display_prediction_result(prediction, probabilities, features, predictor):
         # Create probability chart with correct labels
         fig = go.Figure()
         fig.add_trace(go.Bar(
-            y=['Bad Quality', 'Good Quality'],  # Correct order
+            y=['Bad Quality', 'Good Quality'],
             x=[probabilities[0], probabilities[1]],
             orientation='h',
             marker_color=['#dc3545', '#28a745'],
@@ -391,7 +396,6 @@ def display_prediction_result(prediction, probabilities, features, predictor):
     for i, feature in enumerate(features):
         with feature_cols[i % 3]:
             value = features[feature]
-            # FIXED: Call the method correctly on the predictor instance
             emoji = "✅" if predictor._is_good_value(feature, value) else "⚠️"
             st.metric(f"{emoji} {feature.title()}", f"{value:.3f}")
             
@@ -436,9 +440,10 @@ def show_analysis_page(predictor):
         
         if wine_data is not None:
             st.success(f"✅ Dataset loaded from: {used_path}")
-            wine_data['quality_label'] = (wine_data['quality'] > 6.5).astype(int)
+            # Updated threshold to >=6
+            wine_data['quality_label'] = (wine_data['quality'] >= 6).astype(int)
             st.info(f"📊 Dataset: {wine_data.shape[0]} samples, {wine_data.shape[1]-1} features")
-            st.info(f"🎯 Quality distribution: {sum(wine_data['quality_label']==1)} Good, {sum(wine_data['quality_label']==0)} Bad")
+            st.info(f"🎯 Quality distribution: {sum(wine_data['quality_label']==1)} Good (>=6), {sum(wine_data['quality_label']==0)} Bad (<6)")
         else:
             st.error("❌ Could not load dataset from any known path.")
             st.info("Please ensure the CSV file exists in one of these locations:")
@@ -474,10 +479,10 @@ def show_dataset_overview(wine_data):
     with col2:
         st.metric("Features", len(wine_data.columns) - 1)
     with col3:
-        good_wines = (wine_data['quality'] > 6.5).sum()
-        st.metric("Good Wines", good_wines)
+        good_wines = (wine_data['quality'] >= 6).sum()  # Updated threshold
+        st.metric("Good Wines (>=6)", good_wines)
     with col4:
-        st.metric("Bad Wines", len(wine_data) - good_wines)
+        st.metric("Bad Wines (<6)", len(wine_data) - good_wines)
     
     # Display data sample
     st.subheader("Dataset Sample")
@@ -501,11 +506,11 @@ def show_quality_distribution(wine_data):
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        # Binary classification distribution
-        quality_binary = (wine_data['quality'] > 6.5).astype(int)
+        # Binary classification distribution with updated threshold
+        quality_binary = (wine_data['quality'] >= 6).astype(int)  # Updated threshold
         fig = px.pie(
             values=quality_binary.value_counts().values,
-            names=['Bad (≤6.5)', 'Good (>6.5)'],
+            names=['Bad (<6)', 'Good (>=6)'],  # Updated labels
             title="Binary Quality Distribution",
             color_discrete_sequence=['lightcoral', 'lightgreen']
         )
@@ -546,7 +551,7 @@ def show_model_info_page(predictor):
         st.metric("Algorithm", "K-Nearest Neighbors")
         st.metric("Best K Value", predictor.model_info['best_k'])
         st.metric("Accuracy", f"{predictor.model_info['accuracy']:.1%}")
-       
+        st.metric("Quality Threshold", "Good (>=6), Bad (<6)")
     
     with col2:
         st.subheader("Feature Information")
