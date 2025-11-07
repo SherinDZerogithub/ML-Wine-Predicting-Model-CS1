@@ -1,11 +1,12 @@
-€•y      }”(Œpipeline”Œsklearn.pipeline”ŒPipeline”“”)”}”(Œsteps”]”(Œscaler”Œsklearn.preprocessing._data”ŒStandardScaler”“”)”}”(Œ	with_mean”ˆŒwith_std”ˆŒcopy”ˆŒn_features_in_”K
-Œn_samples_seen_”Œnumpy._core.multiarray”Œscalar”“”Œnumpy”Œdtype”“”Œi8”‰ˆ‡”R”(KŒ<”NNNJÿÿÿÿJÿÿÿÿK t”bC¯      ”†”R”Œmean_”hŒ_reconstruct”“”hŒ ndarray”“”K …”Cb”‡”R”(KK
-…”hŒf8”‰ˆ‡”R”(KhNNNJÿÿÿÿJÿÿÿÿK t”b‰CX’e¢¯ž @LŽ±Æ9åà?;äwf.Ñ?>{®žt?@®Swtýe¶?•89LÕ·/@Ä¶ØÇ(G@D†QæJåï?Þ—å
+€•õ      }”(Œpipeline”Œsklearn.pipeline”ŒPipeline”“”)”}”(Œsteps”]”(Œscaler”Œsklearn.preprocessing._data”ŒStandardScaler”“”)”}”(Œ	with_mean”ˆŒwith_std”ˆŒcopy”ˆŒn_features_in_”K
+Œn_samples_seen_”Œnumpy._core.multiarray”Œscalar”“”Œnumpy”Œdtype”“”Œi8”‰ˆ‡”R”(KŒ<”NNNJÿÿÿÿJÿÿÿÿK t”bC¯      ”†”R”Œmean_”Œjoblib.numpy_pickle”ŒNumpyArrayWrapper”“”)”}”(Œsubclass”hŒ ndarray”“”Œshape”K
+…”Œorder”ŒC”Œdtype”hŒf8”‰ˆ‡”R”(KhNNNJÿÿÿÿJÿÿÿÿK t”bŒ
+allow_mmap”ˆŒnumpy_array_alignment_bytes”Kubÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’e¢¯ž @LŽ±Æ9åà?;äwf.Ñ?>{®žt?@®Swtýe¶?•89LÕ·/@Ä¶ØÇ(G@D†QæJåï?Þ—å
 I
 @—í×ËÜõä?J
-@-Õ$@”t”bŒvar_”h$h&K …”h(‡”R”(KK
-…”h.‰CXû°:0›å @‚ÞÓ!ç§ ?ã³ï%‘¢£?;šÓ¸à' @ž ‰÷`?S+òDù„Z@N×"z1…@º‚dºîÍ> µ{(¾á—?oë{Øe.š?ÌûŠ… ò?”t”bŒscale_”h$h&K …”h(‡”R”(KK
-…”h.‰CX·¯w©9§û?˜{âÐ&Ç?áÛ÷úÉ?jIt’¿¼ö?Þo[ÐM§?J–5mK™$@$€—YB@@Çcòò^?@ßò/ŒÃ?Â“¤'wÄ?>	0™Ä ñ?”t”bŒ_sklearn_version”Œ1.7.2”ub†”Œxgb”Œxgboost.sklearn”Œ
+@-Õ$@•*       Œvar_”h%)”}”(h(h*h+K
+…”h-h.h/h2h4ˆh5Kubÿÿÿÿû°:0›å @‚ÞÓ!ç§ ?ã³ï%‘¢£?;šÓ¸à' @ž ‰÷`?S+òDù„Z@N×"z1…@º‚dºîÍ> µ{(¾á—?oë{Øe.š?ÌûŠ… ò?•,       Œscale_”h%)”}”(h(h*h+K
+…”h-h.h/h2h4ˆh5Kubÿÿ·¯w©9§û?˜{âÐ&Ç?áÛ÷úÉ?jIt’¿¼ö?Þo[ÐM§?J–5mK™$@$€—YB@@Çcòò^?@ßò/ŒÃ?Â“¤'wÄ?>	0™Ä ñ?•      Œ_sklearn_version”Œ1.7.2”ub†”Œxgb”Œxgboost.sklearn”Œ
 XGBClassifier”“”)”}”(Œn_estimators”KdŒ	objective”Œbinary:logistic”Œ	max_depth”KŒ
 max_leaves”NŒ max_bin”NŒ
 grow_policy”NŒ
@@ -1974,12 +1975,12 @@ num_deletedSL       0L
 num_featureSL       11L       	num_nodesSL       15L       size_leaf_vectorSL       1}}}L       nameSL       gbtree}L       learner_model_param{L       
 base_scoreSL       [1.3594662E-1]L       boost_from_averageSL       1L       	num_classSL       0L       
 num_featureSL       11L       
-num_targetSL       1}L       	objective{L       nameSL       binary:logisticL       reg_loss_param{L       scale_pos_weightSL       1}}}L        version[#L       iii}}•ï      ”…”R”sbub†”eŒtransform_input”NŒmemory”NŒ verbose”‰h@hAubŒ
+num_targetSL       1}L       	objective{L       nameSL       binary:logisticL       reg_loss_param{L       scale_pos_weightSL       1}}}L        version[#L       iii}}•X      ”…”R”sbub†”eŒtransform_input”NŒmemory”NŒ verbose”‰h>h?ubŒ
 feature_names”]”(Œ
 fixed acidity”Œvolatile acidity”Œ
 citric acid”Œresidual sugar”Œ	chlorides”Œfree sulfur dioxide”Œtotal sulfur dioxide”Œ density”ŒpH”Œ	sulphates”Œ alcohol”eŒ
-model_name”ŒXGBClassifier_with_scaler”Œaccuracy”G?ìõÂ\(öŒ classes”h$h&K …”h(‡”R”(KK…”h‰C               ”t”bŒ
+model_name”ŒXGBClassifier_with_scaler”Œaccuracy”G?ìõÂ\(öŒ classes”h%)”}”(h(h*h+K…”h-h.h/hh4ˆh5Kubÿÿÿÿÿÿÿÿÿÿÿÿÿÿ               •Œ      Œ
 training_date”Œdatetime”Œdatetime”“”C
  é
 ®[”…”R”Œ
-parameters”}”(hJhKh_NhRNhrNhZNh[NhYNhgNhqNhi‰hohphjNhkNhTNhONhfNheNhPNhNNhmNhlNhVNhLKhMNhUNh`Gø      hdNhnNhIKdhcNhaNhbNh\Nh]KhXNh^NhWNhSNhhNhQNhu‰uŒdataset_info”}”(Œoriginal_shape”M?K†”Œtraining_samples”M¯Œtest_samples”MŒclass_distribution”}”(hhC        ”†”R”hhC      ”†”R”hhC       ”†”R”hhC£       ”†”R”uuu.
+parameters”}”(hHhIh]NhPNhpNhXNhYNhWNheNhoNhg‰hmhnhhNhiNhRNhMNhdNhcNhNNhLNhkNhjNhTNhJKhKNhSNh^Gø      hbNhlNhGKdhaNh_Nh`NhZNh[KhVNh\NhUNhQNhfNhONhs‰uŒdataset_info”}”(Œoriginal_shape”M?K†”Œtraining_samples”M¯Œtest_samples”MŒclass_distribution”}”(hhC        ”†”R”hhC      ”†”R”hhC       ”†”R”hhC£       ”†”R”uuu.

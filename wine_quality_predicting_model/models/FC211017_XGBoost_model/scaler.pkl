@@ -1,26 +1,0 @@
-€•=      Œsklearn.preprocessing._data”ŒStandardScaler”“”)”}”(Œ	with_mean”ˆŒwith_std”ˆŒcopy”ˆŒfeature_names_in_”Œjoblib.numpy_pickle”ŒNumpyArrayWrapper”“”)”}”(Œsubclass”Œnumpy”Œ ndarray”“”Œshape”K
-…”Œorder”ŒC”Œdtype”hŒdtype”“”ŒO8”‰ˆ‡”R”(KŒ|”NNNJÿÿÿÿJÿÿÿÿK?t”bŒ
-allow_mmap”‰Œnumpy_array_alignment_bytes”Kub€cnumpy.core.multiarray
-_reconstruct
-q cnumpy
-ndarray
-qK …qc_codecs
-encode
-qX   bqX   latin1q†qRq ‡qRq	(KK
-…q
-cnumpy
-dtype
-q
-X   O8q‰ˆ‡q
-Rq(KX   |qNNNJÿÿÿÿJÿÿÿÿK?tqb‰]q(X
-   fixed acidityqX   volatile acidityqX
-   citric acidqX   residual sugarqX	   chloridesqX   free sulfur dioxideqX   total sulfur dioxideqX    densityqX   pHqX	   sulphatesqX    alcoholqetqb.•Ê       Œn_features_in_”K
-Œn_samples_seen_”Œnumpy.core.multiarray”Œscalar”“”hŒi8”‰ˆ‡”R”(KŒ<”NNNJÿÿÿÿJÿÿÿÿK t”bC¯      ”†”R”Œmean_”h
-)”}”(hhhK
-…”hhhhŒf8”‰ˆ‡”R”(Kh(NNNJÿÿÿÿJÿÿÿÿK t”bhˆhKubÿÿÿÿÿÿga¢ @8s;	Ñà?àlì+ÿFÑ?Ÿ“=š¬"@°H,Þ3¶?fÍ"³?0@ô–Ó/àºG@»üD}
-åï?Î¥À{
-@ÁÎiTå?Ä<“˜á×$@•*       Œvar_”h
-)”}”(hhhK
-…”hhhh3hˆhKubÿÿÿÿÜ”Dë@ºíwã˜N ?Ë§ÀIã[£?êx¡Aü?C±6è>a?&K›ÙR9]@ÝÆXŒ#’@Á°IÎ>õóë P˜?Í¹™Ÿ? ™àLÛqò?•,       Œscale_”h
-)”}”(hhhK
-…”hhhh3hˆhKubÿÿ?<Æû?Èü\iî×Æ?Ëb+§´ãÈ?}˜Mi?Cõ?á÷(Ñä}§?Xð÷C¨Ÿ%@µôj€0	A@ÔVUHŠ!_?1÷e*U¹Ã?Lg©ÜMÆ?ßž Ï-ñ?•       Œ_sklearn_version”Œ1.5.1”ub.
