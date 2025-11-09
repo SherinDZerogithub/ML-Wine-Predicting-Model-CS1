@@ -5,6 +5,8 @@ import joblib
 import plotly.graph_objects as go
 from pathlib import Path
 import sys
+import warnings
+warnings.filterwarnings('ignore')
 
 # Add the project root to Python path
 sys.path.append(str(Path(__file__).parent))
@@ -58,6 +60,13 @@ st.markdown("""
         font-weight: bold;
         color: #8B0000;
     }
+    .threshold-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 10px 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -91,7 +100,8 @@ class WineQualityPredictor:
                 self.model = model_data['pipeline']
                 self.scaler = self.model.named_steps['scaler']
                 self.feature_names = model_data['feature_names']
-                self.threshold = model_data.get('threshold', 0.5)
+                # Use the stored threshold from the model training
+                self.threshold = model_data.get('threshold', 0.393)  # Default to 0.393 from your training
                 self.accuracy = model_data.get('roc_data', {}).get('auc', 'N/A')
                 self.is_classification = True
                 
@@ -130,6 +140,8 @@ class WineQualityPredictor:
                 self.is_classification = True
                 
             st.success(f"✅ {self.model_type} model loaded successfully!")
+            st.sidebar.info(f"📊 Model threshold: {getattr(self, 'threshold', 0.5):.3f}")
+                
         except Exception as e: 
             st.error(f"❌ Error loading model: {str(e)}")
             raise e
@@ -140,8 +152,11 @@ class WineQualityPredictor:
             # Convert to numpy array and reshape
             features_array = np.array(feature_values).reshape(1, -1)
             
+            # Create DataFrame with feature names to avoid warnings
+            features_df = pd.DataFrame(features_array, columns=self.feature_names)
+            
             # Scale features
-            features_scaled = self.scaler.transform(features_array)
+            features_scaled = self.scaler.transform(features_df)
             
             # Make prediction based on model type
             if not self.is_classification:
@@ -161,18 +176,55 @@ class WineQualityPredictor:
             else:
                 # Classification models
                 if hasattr(self.model, 'predict_proba'):
+                    # Get probabilities for both classes
                     probabilities = self.model.predict_proba(features_scaled)[0]
-                    prob_good = probabilities[1]  # Probability of being 'Good'
-
-                    # Apply custom threshold (if available)
+                    
+                    # DEBUG: Show raw probabilities and classes
+                    debug_info = {
+                        'raw_probabilities': probabilities,
+                        'model_classes': getattr(self.model, 'classes_', None),
+                        'threshold': getattr(self, 'threshold', 0.5)
+                    }
+                    
+                    # Handle different class label ordering - CRITICAL FIX
+                    if hasattr(self.model, 'classes_'):
+                        classes = list(self.model.classes_)
+                        # Map probabilities to correct classes
+                        if len(classes) == 2:
+                            class_0_idx = list(classes).index(0)
+                            class_1_idx = list(classes).index(1)
+                            prob_bad = probabilities[class_0_idx]
+                            prob_good = probabilities[class_1_idx]
+                        else:
+                            # Fallback if unexpected number of classes
+                            prob_bad = probabilities[0]
+                            prob_good = probabilities[1]
+                    else:
+                        # Default ordering if no classes attribute
+                        prob_bad = probabilities[0]
+                        prob_good = probabilities[1]
+                    
+                    # Apply threshold for prediction - use the tuned threshold
                     threshold = getattr(self, 'threshold', 0.5)
                     prediction = 1 if prob_good >= threshold else 0
+                    
+                    # Return probabilities in consistent order: [bad, good]
+                    probabilities = np.array([prob_bad, prob_good])
+                    
+                    return prediction, probabilities, debug_info
+                    
                 else:
                     # For models without probability (use predict)
-                    prediction = self.model.predict(features_scaled)[0]
-                    probabilities = np.array([1.0, 0.0]) if prediction == 1 else np.array([0.0, 1.0])
-                
-                return prediction, probabilities, None
+                    raw_prediction = self.model.predict(features_scaled)[0]
+                    # Map raw prediction to our binary classes
+                    if raw_prediction >= 6:  # If it's predicting quality scores
+                        prediction = 1
+                        probabilities = np.array([0.2, 0.8])
+                    else:
+                        prediction = 0
+                        probabilities = np.array([0.8, 0.2])
+                    
+                    return prediction, probabilities, None
                 
         except Exception as e:
             st.error(f"❌ Prediction error: {str(e)}")
@@ -188,12 +240,16 @@ class WineQualityPredictor:
             'total sulfur dioxide': (20, 50),
             'citric acid': (0.2, 0.5),
             'fixed acidity': (6.5, 8.0),
-            'density': (0.992, 0.997)
+            'density': (0.992, 0.997),
+            'free sulfur dioxide': (10, 30),
+            'residual sugar': (1.5, 3.0),
+            'ph': (3.2, 3.4)
         }
         
-        if feature in good_ranges:
-            low, high = good_ranges[feature]
-            return low <= value <= high
+        feature_lower = feature.lower()
+        for key, (low, high) in good_ranges.items():
+            if key in feature_lower:
+                return low <= value <= high
         return True
 
 def load_available_models():
@@ -238,10 +294,21 @@ def load_available_models():
     
     return valid_models
 
-def display_classification_result(prediction, probabilities, features, predictor):
+def display_classification_result(prediction, probabilities, features, predictor, debug_info=None):
     """Display results for classification models"""
     st.markdown("---")
     st.subheader("Prediction Results")
+    
+    # Show model threshold information
+    threshold = getattr(predictor, 'threshold', 0.5)
+    prob_bad, prob_good = probabilities
+    
+    # Check if prediction matches threshold logic
+    threshold_correct = (prediction == 1 and prob_good >= threshold) or (prediction == 0 and prob_good < threshold)
+    
+    if not threshold_correct:
+        st.error("🚨 PREDICTION LOGIC ERROR: Prediction doesn't match threshold!")
+        st.write(f"Prediction: {prediction}, Good prob: {prob_good:.3f}, Threshold: {threshold:.3f}")
     
     col1, col2 = st.columns([1, 2])
     
@@ -254,6 +321,7 @@ def display_classification_result(prediction, probabilities, features, predictor
                 <p><strong>Quality >= 6</strong></p>
             </div>
             """, unsafe_allow_html=True)
+            confidence = prob_good * 100
         else:  # Bad quality (<6)
             st.markdown("""
             <div class="prediction-bad">
@@ -262,33 +330,46 @@ def display_classification_result(prediction, probabilities, features, predictor
                 <p><strong>Quality < 6</strong></p>
             </div>
             """, unsafe_allow_html=True)
+            confidence = prob_bad * 100
         
-        confidence = probabilities[prediction] * 100
         st.metric("Prediction Confidence", f"{confidence:.1f}%")
+        
+        # Show threshold comparison
+        if prob_good >= threshold:
+            st.success(f"✅ Good quality probability ({prob_good:.1%}) ≥ threshold ({threshold:.1%})")
+        else:
+            st.error(f"❌ Good quality probability ({prob_good:.1%}) < threshold ({threshold:.1%})")
         
         st.info(f"""
         **Probability Breakdown:**
-        - Good Quality: {probabilities[1]:.1%}
-        - Bad Quality: {probabilities[0]:.1%}
+        - Good Quality: {prob_good:.1%}
+        - Bad Quality: {prob_bad:.1%}
         """)
 
     with col2:
         # Create probability chart
+        prob_bad, prob_good = probabilities
         fig = go.Figure()
         fig.add_trace(go.Bar(
             y=['Bad Quality', 'Good Quality'],
-            x=[probabilities[0], probabilities[1]],
+            x=[prob_bad, prob_good],
             orientation='h',
             marker_color=['#dc3545', '#28a745'],
-            text=[f'{probabilities[0]:.1%}', f'{probabilities[1]:.1%}'],
+            text=[f'{prob_bad:.1%}', f'{prob_good:.1%}'],
             textposition='auto',
         ))
+        
+        # Add threshold line
+        fig.add_vline(x=threshold, line_dash="dash", line_color="red", 
+                     annotation_text=f"Threshold: {threshold:.3f}",
+                     annotation_position="top right")
+        
         fig.update_layout(
             title="Prediction Probabilities",
             xaxis_title="Probability",
             yaxis_title="Quality Category",
             showlegend=False,
-            height=250
+            height=300
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -327,10 +408,11 @@ def display_regression_result(quality_score, probabilities, features, predictor)
         
         # Binary classification based on score
         binary_prediction = 1 if quality_score >= 6 else 0
+        prob_bad, prob_good = probabilities
         st.info(f"""
         **Binary Classification:**
         - {'🍷 GOOD (≥6)' if binary_prediction == 1 else '❌ BAD (<6)'}
-        - Confidence: {probabilities[binary_prediction]:.1%}
+        - Confidence: {prob_good if binary_prediction == 1 else prob_bad:.1%}
         """)
 
     with col2:
@@ -359,36 +441,61 @@ def display_regression_result(quality_score, probabilities, features, predictor)
         st.plotly_chart(fig, use_container_width=True)
         
         # Probability breakdown
-        st.metric("Probability of Good Quality", f"{probabilities[1]:.1%}")
+        prob_bad, prob_good = probabilities
+        st.metric("Probability of Good Quality", f"{prob_good:.1%}")
 
 def display_feature_analysis(features, predictor):
     """Display feature analysis for both model types"""
-    st.subheader("Input Features Analysis")
+    st.subheader("🔍 Input Features Analysis")
+    
+    # Count problematic features
+    problematic_features = []
+    for feature, value in features.items():
+        if not predictor._is_good_value(feature, value):
+            problematic_features.append(feature)
+    
+    if problematic_features:
+        st.warning(f"⚠️ {len(problematic_features)} features are outside ideal ranges for good quality wine")
     
     # Create columns for features
     feature_cols = st.columns(3)
     
     # Define ideal ranges for each feature
     ideal_ranges = {
-        'alcohol': {'good': '>11.5%', 'bad': '<10.0%'},
-        'volatile acidity': {'good': '<0.5', 'bad': '>0.8'},
-        'sulphates': {'good': '>0.6', 'bad': '<0.5'},
+        'alcohol': {'good': '11.5-14.0%', 'bad': '<10.0% or >14.0%'},
+        'volatile acidity': {'good': '0.1-0.5', 'bad': '>0.8'},
+        'sulphates': {'good': '0.6-1.0', 'bad': '<0.5'},
         'total sulfur dioxide': {'good': '20-50', 'bad': '>80'},
-        'chlorides': {'good': '<0.08', 'bad': '>0.1'},
-        'fixed acidity': {'good': '6.5-8.0', 'bad': 'Extremes'},
+        'chlorides': {'good': '0.01-0.08', 'bad': '>0.1'},
+        'fixed acidity': {'good': '6.5-8.0', 'bad': '<4.0 or >9.0'},
         'citric acid': {'good': '0.2-0.5', 'bad': '<0.1'},
-        'density': {'good': '0.992-0.997', 'bad': 'Extremes'}
+        'density': {'good': '0.992-0.997', 'bad': '<0.990 or >1.000'},
+        'free sulfur dioxide': {'good': '10-30', 'bad': '<5 or >50'},
+        'residual sugar': {'good': '1.5-3.0', 'bad': '>4.0'},
+        'ph': {'good': '3.2-3.4', 'bad': '<3.0 or >3.6'}
     }
     
     for i, feature in enumerate(features):
         with feature_cols[i % 3]:
             value = features[feature]
-            emoji = "✅" if predictor._is_good_value(feature, value) else "⚠️"
+            is_good = predictor._is_good_value(feature, value)
+            emoji = "✅" if is_good else "⚠️"
+            
             st.metric(f"{emoji} {feature.title()}", f"{value:.3f}")
             
             # Show ideal range if available
-            if feature in ideal_ranges:
-                st.caption(f"Good: {ideal_ranges[feature]['good']}")
+            feature_lower = feature.lower()
+            range_found = False
+            for key, ranges in ideal_ranges.items():
+                if key in feature_lower:
+                    st.caption(f"Good range: {ranges['good']}")
+                    if not is_good:
+                        st.caption(f"❌ Outside ideal range")
+                    range_found = True
+                    break
+            
+            if not range_found:
+                st.caption("No specific range defined")
 
 def main():
     # Header
@@ -441,39 +548,54 @@ def main():
     # Main content area
     st.header("Wine Characteristics Input")
     
-    # Create feature input form
+    # Create feature input form with more reasonable defaults
     col1, col2 = st.columns(2)
     
     features = {}
     
     with col1:
         st.subheader("Basic Properties")
-        features['fixed acidity'] = st.slider("Fixed Acidity", 4.0, 16.0, 7.0, 0.1)
-        features['volatile acidity'] = st.slider("Volatile Acidity", 0.1, 1.6, 0.5, 0.01)
-        features['citric acid'] = st.slider("Citric Acid", 0.0, 1.0, 0.3, 0.01)
-        features['residual sugar'] = st.slider("Residual Sugar", 0.9, 16.0, 2.5, 0.1)
-        features['chlorides'] = st.slider("Chlorides", 0.01, 0.6, 0.08, 0.001)
+        features['fixed acidity'] = st.slider("Fixed Acidity", 4.0, 16.0, 7.4, 0.1,
+                                            help="Ideal range: 6.5-8.0 g/dm³")
+        features['volatile acidity'] = st.slider("Volatile Acidity", 0.1, 1.6, 0.5, 0.01,
+                                               help="Ideal range: 0.1-0.5 g/dm³ (lower is better)")
+        features['citric acid'] = st.slider("Citric Acid", 0.0, 1.0, 0.25, 0.01,
+                                          help="Ideal range: 0.2-0.5 g/dm³")
+        features['residual sugar'] = st.slider("Residual Sugar", 0.9, 16.0, 2.5, 0.1,
+                                             help="Ideal range: 1.5-3.0 g/dm³")
+        features['chlorides'] = st.slider("Chlorides", 0.01, 0.6, 0.08, 0.001,
+                                        help="Ideal range: 0.01-0.08 g/dm³ (lower is better)")
         
     with col2:
         st.subheader("Chemical Properties")
-        features['free sulfur dioxide'] = st.slider("Free Sulfur Dioxide", 1.0, 72.0, 15.0, 1.0)
-        features['total sulfur dioxide'] = st.slider("Total Sulfur Dioxide", 6.0, 289.0, 45.0, 1.0)
-        features['density'] = st.slider("Density", 0.990, 1.004, 0.996, 0.001)
-        features['pH'] = st.slider("pH", 2.7, 4.0, 3.3, 0.1)
-        features['sulphates'] = st.slider("Sulphates", 0.3, 2.0, 0.6, 0.01)
-        features['alcohol'] = st.slider("Alcohol (%)", 8.0, 15.0, 10.5, 0.1)
+        features['free sulfur dioxide'] = st.slider("Free Sulfur Dioxide", 1.0, 72.0, 15.0, 1.0,
+                                                  help="Ideal range: 10-30 mg/dm³")
+        features['total sulfur dioxide'] = st.slider("Total Sulfur Dioxide", 6.0, 289.0, 45.0, 1.0,
+                                                   help="Ideal range: 20-50 mg/dm³")
+        features['density'] = st.slider("Density", 0.990, 1.004, 0.996, 0.001,
+                                      help="Ideal range: 0.992-0.997 g/cm³")
+        features['pH'] = st.slider("pH", 2.7, 4.0, 3.3, 0.1,
+                                 help="Ideal range: 3.2-3.4")
+        features['sulphates'] = st.slider("Sulphates", 0.3, 2.0, 0.65, 0.01,
+                                        help="Ideal range: 0.6-1.0 g/dm³")
+        features['alcohol'] = st.slider("Alcohol (%)", 8.0, 15.0, 11.0, 0.1,
+                                      help="Ideal range: 11.5-14.0% (higher is generally better)")
     
     # Add interpretation help
     with st.expander("💡 How to interpret these values"):
         st.markdown("""
         **Feature Guidelines for Good Quality Wine:**
         - **Alcohol**: Higher alcohol content (11.5-14%) generally indicates better quality.
-        - **Volatile Acidity**: Lower values (<0.5) are better – high values can indicate a vinegar taste.
+        - **Volatile Acidity**: Lower values (0.1-0.5) are better – high values can indicate a vinegar taste.
         - **Sulphates**: Moderate to high levels (0.6–1.0) help preservation and quality.
-        - **Chlorides**: Lower salt content (<0.08) indicates better quality.
+        - **Chlorides**: Lower salt content (0.01-0.08) indicates better quality.
         - **Total Sulfur Dioxide**: Moderate levels (20–50) are ideal for preservation.
         - **Citric Acid**: Moderate levels (0.2–0.5) add freshness.
         - **Fixed Acidity**: Balanced levels (6.5–8.0) contribute to structure.
+        - **Free Sulfur Dioxide**: Moderate levels (10-30) prevent oxidation.
+        - **Residual Sugar**: Balanced levels (1.5-3.0) for taste.
+        - **pH**: Balanced acidity (3.2-3.4) for stability.
+        - **Density**: Proper range (0.992-0.997) indicates correct composition.
         """)
 
     # Prediction button
@@ -486,19 +608,39 @@ def main():
     if submitted:
         with st.spinner("Analyzing wine characteristics..."):
             feature_list = [features[feature] for feature in predictor.feature_names]
-            prediction, probabilities, quality_score = predictor.predict_quality(feature_list)
+            prediction, probabilities, debug_info = predictor.predict_quality(feature_list)
         
-        if prediction is not None:
+        if prediction is not None and probabilities is not None:
+            # Debug information (can be removed in production)
+            with st.sidebar:
+                st.markdown("---")
+                st.subheader("Debug Info")
+                st.write(f"Prediction: {prediction}")
+                st.write(f"Probabilities: {probabilities}")
+                
+                # Handle debug info based on model type
+                if not predictor.is_classification:
+                    # For regression models, debug_info is the quality score
+                    st.write(f"Quality Score: {debug_info:.3f}")
+                else:
+                    # For classification models, debug_info is a dictionary
+                    if debug_info and isinstance(debug_info, dict):
+                        st.write(f"Raw probabilities: {debug_info.get('raw_probabilities', 'N/A')}")
+                        st.write(f"Model classes: {debug_info.get('model_classes', 'N/A')}")
+                    st.write(f"Model threshold: {getattr(predictor, 'threshold', 0.5):.3f}")
+            
             # Display appropriate result based on model type
             if not predictor.is_classification:
                 # Random Forest - regression model
-                display_regression_result(quality_score, probabilities, features, predictor)
+                display_regression_result(debug_info, probabilities, features, predictor)
             else:
                 # Classification models
-                display_classification_result(prediction, probabilities, features, predictor)
+                display_classification_result(prediction, probabilities, features, predictor, debug_info)
             
             # Display feature analysis for both model types
             display_feature_analysis(features, predictor)
+        else:
+            st.error("❌ Prediction failed. Please check the model and input values.")
 
 if __name__ == "__main__":
     main()
